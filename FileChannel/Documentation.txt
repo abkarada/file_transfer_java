@@ -1,0 +1,12 @@
+--- Class FileChannel ---
+
+A channel for reading, writing, mapping and manipulating a file.
+
+//Just reading
+var fc = FileChannel.open(path, StandardOpenOption.READ);
+
+//READ + WRITING(if it exists open, else create one)
+var fc = FileChannel.open(path, StandardOpenOption.READ, 
+				StandardOpenOption.WRITE,
+				StandardOpenOption.CREATE);
+

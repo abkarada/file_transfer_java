@@ -1,0 +1,58 @@
+--Class MappedByteBuffer--
+
+A direct byte buffer whose content is a memory-mapped region of a file.
+
+Mapped byte buffer and the file mapping that is represents remain valid until
+the buffer itself is garbage-collected.
+
+public final boolean isLoaded()
+Tells whether or not this buffer's content is resident in physical memory.
+Returns:
+true if it is likely that this buffer's content is resident in physical memory.
+
+public final MappedByteBuffer load()
+Loads this buffer's content into physical memory.
+This method makes a best effort to ensure that, when it returns, this
+buffer's content is resident in physical memory.
+Returns:
+This buffer.
+
+public final MappedByteBuffer force()
+Forces any changes made to this buffer's content to be written to the storage
+device containing the mapped file.
+If the file mapped into this buffer resides on a local storage device then this
+method returns it is guaranteed that all changes made to the buffer since it was
+created, or since this method was last invoked, will have been writeen to that
+device.
+
+If this buffer was not mapped in read/write mode(FileChannel.MapMpde.READ_WRITE)then invoking this method has no effect.
+Returns:
+This buffer
+
+try(var ch = FileChannel.open(Path.of("data.bin"),
+	StandardOpenOption.READ, StandardOpenOptions.WRITE,
+			StandardOpenOption.CREATE)){
+	long size = Math.max(ch.size(), 1 << 20);
+	if(ch.size() < size) ch.truncate(size);
+	var mbb = ch.map(FileChannel.MapMode.READ_WRITE, 0 , size);//direct
+
+	mbb.order(ByteOrder.LITTLE_ENDIAN);
+	mbb.putInt(0, 0xCAFEBABE);
+	mbb.put(8, (byte) 7);
+
+	mbb.force();
+		}
+
+--- Chunking ---
+final long fileSize = Files.size(path);
+final long chunk = 256L << 20; // 256 MB
+try(var ch = FileChannel.open(path, StandardOpenOption.READ)){
+	for(long off = 0; off < fileSize; off += chunk){
+		long len = Math.min(chunk, fileSize - off);
+		var mbb = ch.map(FileChannel.MapMode.READ_ONLY, off, len);
+		while(mbb.hasRemaining()){
+			byte b = mbb.get();
+			//..
+		}
+	}
+}

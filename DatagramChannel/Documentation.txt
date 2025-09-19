@@ -1,0 +1,121 @@
+--Class DatagramChannel--
+
+public abstract class DatagramChannel 
+	extends AbstractSelectableChannel
+		implements ByteChannel, ScatteringByteChannel,
+			   GatheringByteChannel, MulticastChannel;
+
+
+Socket options are configured using the "setOption" method.
+A datagram channel to an Internet Protocol socket supports 
+the following options:
+
+--Option Name--| --- Description ---
+ SO_SNDBUF --> The size of the socket send buffer.
+ SO_RCVBUF --> The size of the socket receive buffer.
+ SO_REUSEADDR --> Re-use address
+ SO_BROADCAST --> Allow transmissions of broadcast datagrams.
+
+public abstract <T> DatagramChannel setOption(SocketOption <T> name , T value)
+
+T - The type of the socket option value
+name - The socket options
+value - The value of socket option
+
+returns: This channel
+
+public abstract DatagramSocket socket()
+Retrieves a datagram socket associated with this channel.
+
+returns: A datagram socket associated with this channel.
+
+public abstract boolean isConnected()
+Tells whether or not this channel's socket is connected.
+
+returns: true if, and only if, this channel's socket is open and connected.
+
+public abstract DatagramChannel connect(SocketAddress remote) 
+Connects this channel's socket.
+
+returns: This datagram channel
+
+public abstract DatagramChannel disconnect()
+Disconnects this channel's socket.
+returns: This datagram channel
+
+public abstract SocketAddress getRemoteAddress()
+returns the remote address to which this channel's socket is connected.
+
+returns: The remote address; null if the channel's socket is not connected.
+
+public abstract SocketAddress receive(ByteBuffer destination) throws IOException
+Receives a datagram via this channel.
+If a datagram is immediately available, or if this channel is in BLOCKING MODE
+and one eventually becomes available, then the datagram is copied into the
+given byte buffer and its source address is returned.
+*If this channel is in non-blocking mode and a datagram is not immediately 
+available then this method immediately returns null.
+returns:The datagram's source address, or null if this channel is in 
+NON-BLOCKING MODE and no datagram was immediately available.
+
+public abstract int send(ByteBuffer src, SocketAddress target)
+				throws IOException
+Sends a datagram via this channel.
+If this channel is in non-blocking mode and there is sufficient room in the 
+underlying output buffer, or this channel is in blocking mode and sufficient
+room becomes available, then the remaining bytes in the given buffer are 
+transmitted as a single datagram to the given target address.
+
+The datagram is transferred from the byte buffer as if by a regular write 
+operation.
+
+Parameters:
+src - The address to containing the datagram to be sent.
+target - The address to which the datagram is to be sent.
+Returns:
+The number of bytes sent, which will be either the number of bytes that
+were remaining in the source buffer when this method was invoked or,
+if this channel is non-blocking may be zero if there was a insufficient room
+for the datagram in the underlying output buffer.
+
+public abstract int  read(ByteBuffer dst) throws IOException
+Reads a datagram from this channel.
+
+This method may only be invoked if this channel's socket is connected, and
+it only accepts datagram from the socket's peer.
+Returnes:
+The number of bytes read, possibly zero, of -1 if the channel has reached end-of-stream.
+
+public abstract int write(ByteBuffer src) throws IOException
+
+Writes a datagram to this channel.
+This method may only bee invoked if this channel's socket is connected,in which
+case it sends datagrams directly to the socket's peer.
+Returnes:
+The number of bytes written, possibly zero.
+
+--Security--
+DatagramChannel is runs a security check for every send()/receive() action.
+(SecurityManager -> checkConnect/checkAccept)
+
+if you bind with connect() this security check is get bypass and performance is
+increase.
+
+DatagramChannel channel = DatagramChannel.open();
+channel.bind(new InetSocketAddress(9999));
+
+ByteBuffer buf = ByteBuffer.allocate(1024);
+SocketAddress srcAddr = channel.receive(buf);//receive() is returns a SockAddr
+if(srcAddr != null)
+{
+buf.flip();
+System.out.println("Received: " + new String(buf.array(), 0 , buf.limit()));
+}
+
+String msg = "Hey!";
+ByteBuffer outBuf = ByteBuffer.wrap(msg.getBytes());
+channel.send(outBuf, new InetSocketAddress("127.0.0.1", 8888));
+
+read()/write -> stream
+receive()/send -> datagram(request - response)
+
