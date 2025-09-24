@@ -30,9 +30,9 @@ public final class CRC32C_Packet {
 
     public void resetForRetry() { header.position(0).limit(HEADER_SIZE); }
 
-    public static long fileId(ByteBuffer h) { return h.getLong(OFF_FILE_ID); }
-    public static int  seqNo (ByteBuffer h) { return h.getInt (OFF_SEQ); }
-    public static int  total (ByteBuffer h) { return h.getInt (OFF_TOTAL); }
-    public static int  plen  (ByteBuffer h) { return Short.toUnsignedInt(h.getShort(OFF_PLEN)); }
-    public static int  crc32 (ByteBuffer h) { return h.getInt(OFF_CRC); }
+    public  static long fileId(ByteBuffer h) { return h.getLong(OFF_FILE_ID); }
+    public  static int  seqNo (ByteBuffer h) { return h.getInt (OFF_SEQ); }
+    public  static int  total (ByteBuffer h) { return h.getInt (OFF_TOTAL); }
+    public  static int  plen  (ByteBuffer h) { return Short.toUnsignedInt(h.getShort(OFF_PLEN)); }
+    public  static int  crc32 (ByteBuffer h) { return h.getInt(OFF_CRC); }
 }

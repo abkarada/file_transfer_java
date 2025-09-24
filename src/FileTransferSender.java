@@ -39,7 +39,21 @@ public class FileTransferSender {
 			candidate_file_Id = buffer.getLong(1); 
 		}
 
-		return candidate_file_Id == fileId;
+		if(candidate_file_Id == fileId)
+		{
+			pkt.make_SYN_ACK(fileId);
+			try{
+			while(channel.write(pkt.get_header().duplicate()) == 0)
+			{
+				pkt.resetForRetransmitter();
+				LockSupport.parkNanos(200_000);
+			}
+			}catch(IOException e){
+				System.err.println("SYN+ACK Signal Error");
+			}
+			return true;
+		}
+		return false;
 		
 		}
 	    public static void sendOne(CRC32C crc, CRC32C_Packet pkt,
@@ -157,8 +171,6 @@ public class FileTransferSender {
 				}catch(IOException e){
 					System.err.println("SHAttered: " + e);
 				}
-				
-
 					
 	    		}
 	    		

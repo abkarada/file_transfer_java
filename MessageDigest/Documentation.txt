@@ -1,0 +1,6 @@
+-- Class MessageDigest --
+	java.lang.Object
+		java.security.MessageDigestSpi
+			java.security.MessageDigest
+
+

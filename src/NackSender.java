@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.BitSet;
 import java.util.concurrent.*;
@@ -14,12 +15,14 @@ public class NackSender implements Runnable{
 	public final DatagramChannel channel;
 	public final BitSet recv;
 	public final NackFrame frame;
+	public final MappedByteBuffer mem_buf;
 	public NackSender(DatagramChannel channel, long fileId, int file_size,
-			int total_seq){
+			int total_seq, MappedByteBuffer mem_buf){
 		this.channel = channel;
 		this.fileId = fileId;
 		this.file_size = file_size;
 		this.total_seq = total_seq;
+		this.mem_buf = mem_buf;
 		this.recv = new BitSet(total_seq);
 		this.frame = new NackFrame();
 	}
@@ -27,7 +30,7 @@ public class NackSender implements Runnable{
 	public volatile int cum_Ack = 0;
 	public final int CRC32C_HEADER_SIZE = 22;
 	public final int PAYLOAD_SIZE = 1200;
-	public final int TOTAL_PACKET_SIZE = 1222;
+	public final int TOTAL_PACKET_SIZE = CRC32C_HEADER_SIZE + PAYLOAD_SIZE;
 
     	public static final int OFF_FILE_ID  = 0;
     	public static final int OFF_SEQ      = 8;
@@ -50,14 +53,22 @@ public class NackSender implements Runnable{
 		int seqNo = CRC32C_Packet.seqNo(fullPacket);
 		int receivedCrc = CRC32C_Packet.crc32(fullPacket);
 		int payloadLen = CRC32C_Packet.plen(fullPacket);
+		
+		int off;
+		MappedByteBuffer view;
 
 		ByteBuffer payload = fullPacket.slice(CRC32C_Packet.HEADER_SIZE, payloadLen);
 
 		crc.reset();
 		crc.update(payload.duplicate());
 		int calculatedCrc = (int) crc.getValue();
-
+		
 		if(calculatedCrc == receivedCrc){
+			off = seqNo * payloadLen;
+			view = mem_buf.duplicate();
+			view.position(off);
+			view.put(payload.duplicate());
+			
 			recv.set(seqNo);
 			updateCumulativeAck();
 		}
